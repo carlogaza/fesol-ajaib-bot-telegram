@@ -25,3 +25,6 @@ _testmain.go
 
 # Configuration file
 config.json
+
+# Log file
+log.txt

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"log"
 	"time"
 	"strings"
@@ -8,14 +9,15 @@ import (
 	"encoding/json"
 
 	"github.com/tucnak/telebot"
+	"strconv"
 )
 
-var API_KEY string
-
+// Configuration for read json file that contains API KEY
 type Configuration struct {
 	API_KEY		string   `json:"API_KEY"`
 }
 
+// Function to load json configuration file and parse to configuration struct
 func LoadConfig(path string) Configuration {
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -31,10 +33,11 @@ func LoadConfig(path string) Configuration {
 	return config
 }
 
-func jumlah(kata string) int {
+// Calculate the sum of string
+func calculate(words string) int {
 	var sum int = 0
 
-	byteArray := []byte(kata)
+	byteArray := []byte(words)
 	for i := 0; i < len(byteArray); i++ {
 		sum += int(byteArray[i])
 	}
@@ -42,121 +45,204 @@ func jumlah(kata string) int {
 	return sum
 }
 
-func jawab(tanya string) string {
+// Mention user with username, if empty mention with name.
+func mentionUser(pesan telebot.Message) string {
+	username := ""
+
+	if pesan.Sender.Username == "" {
+		username = pesan.Sender.FirstName + " " + pesan.Sender.LastName
+	} else {
+		username = "@" + pesan.Sender.Username
+	}
+
+	return username
+}
+
+// Generate the answer of question
+func answer(query string) string {
 	var ans string
 
-	words := strings.Split(tanya, " ")
+	words := strings.Split(query, " ")
 
-	if strings.Contains(strings.ToLower(tanya), "atau") && len(words) > 2 {
+	if strings.Contains(strings.ToLower(query), "atau") && len(words) > 3 {
+		choose := ""
 		for i := 0; i < len(words); i++ {
-			if strings.ToLower(words[i]) == "atau" {
-				pilih := (jumlah(words[i-1]) + jumlah(words[i+1])) % 2
-				if pilih == 0 {
-					if jumlah(words[i-1]) > jumlah(words[i+1]) {
-						ans = words[i-1]
-					} else {
-						ans = words[i+1]
-					}
+			if strings.ToLower(words[i]) == "atau"{
+				if i == len(words)-1 {
+					println(i)
+					println(len(words))
+					choose = "Pertanyaan kurang lengkap!"
+					i += 99999
 				} else {
-					if jumlah(words[i-1]) < jumlah(words[i+1]) {
-						ans = words[i-1]
+					choose = words[i-1]
+					mod := (calculate(choose) + calculate(words[i+1])) % 2
+					if mod == 0 {
+						if calculate(choose) < calculate(words[i+1]) {
+							choose = words[i+1]
+						}
 					} else {
-						ans = words[i+1]
+						if calculate(words[i-1]) > calculate(words[i+1]) {
+							choose = words[i+1]
+						}
 					}
 				}
-				i = len(words) + 9999999
 			}
 		}
-	} else if (strings.Contains(strings.ToLower(tanya), "fesol") && strings.Contains(strings.ToLower(tanya), "jembut")) ||
-		(strings.Contains(strings.ToLower(tanya), "fesol") && strings.Contains(strings.ToLower(tanya), "jmbt")) {
+		ans = choose
+
+	// This is just for make funny. :D
+	} else if (strings.Contains(strings.ToLower(query), "fesol") &&
+		strings.Contains(strings.ToLower(query), "jembut")) ||
+		(strings.Contains(strings.ToLower(query), "fesol") &&
+		strings.Contains(strings.ToLower(query), "jmbt")) {
 		ans = "ABSOLUTELY!"
+
+	// For 'when' question
+	} else if strings.Contains(strings.ToLower(query), "kapan") {
+		switch calculate(query) % 11 {
+		case 0:
+			ans = "Sekarang!"
+		case 1:
+			ans = "Besok!"
+		case 2:
+			ans = "Mungkin minggu depan."
+		case 3:
+			ans = "Mungkin bulan depan."
+		case 4:
+			ans = "Bisa jadi tahun depan."
+		case 5:
+			ans = strconv.Itoa(calculate(query) % 3 + 2) + " tahun lagi mungkin."
+		case 6:
+			ans = "Aku tidak tahu."
+		case 7:
+			ans = "Mungkin suatu hari nanti."
+		case 8:
+			ans = "Saat lebaran kuda."
+		case 9:
+			ans = "Tidak akan pernah!"
+		case 10:
+			ans = "Itu mustahil!"
+		}
+
+	// For question `how long ...`
+	} else if strings.Contains(strings.ToLower(query), "berapa lama lagi") ||
+		(strings.Contains(strings.ToLower(query), "berapa lama") && strings.Contains(strings.ToLower(query), "akan")) {
+		switch calculate(query) % 5 {
+		case 0:
+			ans = "Selamanya!"
+		case 1:
+			ans = "Beberapa hari lagi."
+		case 2:
+			ans = "Bisa jadi beberapa minggu lagi."
+		case 3:
+			ans = "Mungkin beberapa bulan lagi."
+		case 4:
+			ans = "Sampai saatnya tiba nanti."
+		case 5:
+			ans = "Beberapa menit lagi."
+		case 6:
+			ans = "Beberapa jam lagi."
+		}
+
+	// For question `how long` only
+	} else if strings.Contains(strings.ToLower(query), "berapa lama") {
+		switch calculate(query) % 11 {
+		case 0:
+			ans = "Satu jam."
+		case 1:
+			ans = "Dua jam."
+		case 2:
+			ans = "Beberapa jam."
+		case 3:
+			ans = "Satu hari."
+		case 4:
+			ans = "Dua hari."
+		case 5:
+			ans = "Beberapa hari."
+		case 6:
+			ans = "Satu minggu."
+		case 7:
+			ans = "Satu bulan."
+		case 8:
+			ans = "Beberapa bulan."
+		case 9:
+			ans = "Satu tahun."
+		case 10:
+			ans = "Beberapa tahun."
+		}
+
+	// For general question
 	} else {
-		switch jumlah(tanya) % 8 {
+		switch calculate(query) % 7 {
 		case 0:
 			ans = "Tidak!"
 		case 1:
-			ans = "Jangan!"
-		case 2:
 			ans = "Iya!"
-		case 3:
+		case 2:
 			ans = "Mungkin."
-		case 4:
+		case 3:
 			ans = "Bisa jadi."
-		case 5:
+		case 4:
 			ans = "Aku tidak yakin."
-		case 6:
+		case 5:
 			ans = "Aku ragu."
-		case 7:
+		case 6:
 			ans = "Mungkin suatu hari nanti."
 		}
 	}
-
 	return ans;
 }
 
-func start() {
-	bot, err := telebot.NewBot(API_KEY)
+// Just say hello to user
+func hi(bot *telebot.Bot, message telebot.Message) {
+	bot.SendMessage(message.Chat, "Hello, " + mentionUser(message) + "!", nil)
+}
+
+// /help function
+func help(bot *telebot.Bot, message telebot.Message) {
+	bot.SendMessage(message.Chat,
+		"Tanyakan apapun pada Fesol Ajaib!\n" +
+		"Ketik '/tanya <pertanyaan kamu>'!\n\n" +
+		"Puja Fesol Ajaib! Ululululululu...", nil)
+}
+
+// /tanya function.
+// This function to get user question and answer it
+func ask(bot *telebot.Bot, message telebot.Message) {
+	if strings.ToLower(message.Text) == "/tanya" {
+		bot.SendMessage(message.Chat, mentionUser(message) + " : Ketik pertanyaan kamu di belakang '/tanya'!", nil)
+	} else {
+		bot.SendMessage(message.Chat, mentionUser(message) + " : " + answer(message.Text), nil)
+	}
+}
+
+// Start the bot
+func start(botKEY string) {
+	// Initial new bot with token `BotKEY`
+	bot, err := telebot.NewBot(botKEY)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	pesan := make(chan telebot.Message, 100)
-	bot.Listen(pesan, 1*time.Second)
+	messages := make(chan telebot.Message, 100)
+	bot.Listen(messages, 1*time.Second)
 
-	for pesan := range pesan {
-		println(pesan.Text)
+	for message := range messages {
+		// Capture to log file
+		writeLog(time.Now().Format(time.RFC1123) + "  ->  " + mentionUser(message) + "  ->  " + message.Text + "\n")
+		println(time.Now().Format(time.RFC1123) + "  ->  " + mentionUser(message) + "  ->  " + message.Text)
 
-		if pesan.Text == "/hi" {
-			if pesan.Sender.Username == "" {
-				bot.SendMessage(pesan.Chat,
-					"Hello, " + pesan.Sender.FirstName + " " +
-					pesan.Sender.LastName + "!", nil)
+		if message.Text == "/hi" {
+			hi(bot, message)
+		} else if strings.Contains(message.Text, "/help") || message.Text == "/tanya@FesolAjaibBot" {
+			help(bot, message)
+		} else if strings.Contains(message.Text, "/tanya") {
+			ask(bot, message)
+		} else if strings.HasPrefix(message.Text, "@FesolAjaibBot") || strings.HasSuffix(message.Text, "@FesolAjaibBot") {
+			if strings.ToLower(message.Text) == "@fesolajaibbot" {
+				bot.SendMessage(message.Chat, mentionUser(message) + " : Ketik pertanyaan kamu di belakang '/tanya'!", nil)
 			} else {
-				bot.SendMessage(pesan.Chat,
-					"Hello, @" + pesan.Sender.Username + "!", nil)
-			}
-		} else if strings.Contains(pesan.Text, "/help") || pesan.Text == "/tanya@FesolAjaibBot" {
-			bot.SendMessage(pesan.Chat,
-				"Tanyakan apapun pada Fesol Ajaib!\n Ketik '@FesolAjaibBot <pertanyaan kamu>'!\n\n Puja Fesol Ajaib! Ululululululu...", nil)
-		} else if strings.Contains(pesan.Text, "/tanya") {
-			if strings.ToLower(pesan.Text) == "/tanya" {
-				if pesan.Sender.Username == "" {
-					bot.SendMessage(pesan.Chat,
-						pesan.Sender.FirstName + " " + pesan.Sender.LastName + " : " +
-						"Ketik pertanyaan kamu di belakang '@FesolAjaibBot'", nil)
-				} else {
-					bot.SendMessage(pesan.Chat,
-						"@" + pesan.Sender.Username + " : " + "Ketik pertanyaan kamu di belakang '@FesolAjaibBot'", nil)
-				}
-			} else {
-				if pesan.Sender.Username == "" {
-					bot.SendMessage(pesan.Chat,
-						pesan.Sender.FirstName + " " + pesan.Sender.LastName + " : " +
-						jawab(pesan.Text), nil)
-				} else {
-					bot.SendMessage(pesan.Chat,
-						"@" + pesan.Sender.Username + " : " + jawab(pesan.Text), nil)
-				}
-			}
-		} else if strings.HasPrefix(pesan.Text, "@FesolAjaibBot") || strings.HasSuffix(pesan.Text, "@FesolAjaibBot") {
-			if strings.ToLower(pesan.Text) == "@fesolajaibbot" {
-				if pesan.Sender.Username == "" {
-					bot.SendMessage(pesan.Chat,
-						pesan.Sender.FirstName + " " + pesan.Sender.LastName + " : " +
-						"Ketik pertanyaan kamu di belakang '@FesolAjaibBot'", nil)
-				} else {
-					bot.SendMessage(pesan.Chat,
-						"@" + pesan.Sender.Username + " : " + "Ketik pertanyaan kamu di belakang '@FesolAjaibBot'", nil)
-				}
-			} else {
-				if pesan.Sender.Username == "" {
-					bot.SendMessage(pesan.Chat,
-						pesan.Sender.FirstName + " " + pesan.Sender.LastName + " : " +
-						jawab(pesan.Text), nil)
-				} else {
-					bot.SendMessage(pesan.Chat,
-						"@" + pesan.Sender.Username + " : " + jawab(pesan.Text), nil)
-				}
+				bot.SendMessage(message.Chat, mentionUser(message) + " : " + answer(message.Text), nil)
 			}
 		}
 	}
@@ -164,10 +250,23 @@ func start() {
 
 func main() {
 	config := LoadConfig("./config.json")
-	API_KEY = config.API_KEY
+	start(config.API_KEY)
 
-	start()
-
-//	println(API_KEY)
+//	println(ans)
 //	println(jawab("Tes pertanyaan"))
+}
+
+// Write log message to log file
+// First must create log file named 'log.txt'
+func writeLog(text string) {
+	f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatalln("Failed open log file. ", err)
+	}
+
+	defer f.Close()
+
+	if _,err = f.WriteString(text); err != nil {
+		log.Fatalln("Failed writing to log file. ", err)
+	}
 }
