@@ -289,7 +289,7 @@ func start(botKEY string) {
 			help(bot, message)
 		} else if strings.Contains(message.Text, "/pengembang") {
 			developer(bot, message)
-		} else if strings.Contains(message.Text, "/about") {
+		} else if strings.Contains(message.Text, "/tentang") {
 			about(bot, message)
 		} else if strings.Contains(message.Text, "/tanya") {
 			logApp = ask(bot, message, logApp)
