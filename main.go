@@ -64,7 +64,7 @@ func answer(query string) string {
 
 	words := strings.Split(query, " ")
 
-	if strings.Contains(strings.ToLower(query), "atau") && len(words) > 3 {
+	if strings.Contains(strings.ToLower(query), " atau ") && len(words) > 3 {
 		choose := ""
 		for i := 0; i < len(words); i++ {
 			if strings.ToLower(words[i]) == "atau"{
