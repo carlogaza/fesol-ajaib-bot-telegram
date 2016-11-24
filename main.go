@@ -90,12 +90,19 @@ func answer(query string) string {
 		}
 		ans = choose
 
-	// This is just for make funny. :D
+	// This is just for fun bro. :D
 	} else if (strings.Contains(strings.ToLower(query), "fesol") &&
-		strings.Contains(strings.ToLower(query), "jembut")) ||
-		(strings.Contains(strings.ToLower(query), "fesol") &&
-		strings.Contains(strings.ToLower(query), "jmbt")) {
+			strings.Contains(strings.ToLower(query), "jembut")) ||
+			(strings.Contains(strings.ToLower(query), "fesol") &&
+			strings.Contains(strings.ToLower(query), "jmbt")) {
 		ans = "ABSOLUTELY!"
+
+	} else if strings.Contains(strings.ToLower(query), "jam") &&
+			(strings.Contains(strings.ToLower(query), "berapa") ||
+			strings.Contains(strings.ToLower(query), "brp")) &&
+			(strings.Contains(strings.ToLower(query), "sekarang") ||
+			strings.Contains(strings.ToLower(query), "skrg")) {
+		ans = "Sekarang jam " + time.Now().Format(time.Kitchen)
 
 	// For 'when' question
 	} else if strings.Contains(strings.ToLower(query), "kapan") {
@@ -126,8 +133,9 @@ func answer(query string) string {
 
 	// For question `how long ...`
 	} else if strings.Contains(strings.ToLower(query), "berapa lama lagi") ||
-		(strings.Contains(strings.ToLower(query), "berapa lama") && strings.Contains(strings.ToLower(query), "akan")) {
-		switch calculate(query) % 5 {
+			(strings.Contains(strings.ToLower(query), "berapa lama") &&
+			strings.Contains(strings.ToLower(query), "akan")) {
+		switch calculate(query) % 7 {
 		case 0:
 			ans = "Selamanya!"
 		case 1:
@@ -171,6 +179,21 @@ func answer(query string) string {
 			ans = "Beberapa tahun."
 		}
 
+	} else if strings.Contains(strings.ToLower(query), "kenapa") ||
+			strings.Contains(strings.ToLower(query), "mengapa") {
+		switch calculate(query) % 5 {
+		case 0:
+			ans = "Ngeyel sih!"
+		case 1:
+			ans = "Noob sih!"
+		case 2:
+			ans = "Mungkin sudah takdir."
+		case 3:
+			ans = "Sudah sepantasnya seperti itu."
+		case 4:
+			ans = "Memang harus seperti itu."
+		}
+
 	// For general question
 	} else {
 		switch calculate(query) % 7 {
@@ -187,7 +210,7 @@ func answer(query string) string {
 		case 5:
 			ans = "Aku ragu."
 		case 6:
-			ans = "Mungkin suatu hari nanti."
+			ans = "Sepertinya iya."
 		}
 	}
 	return ans;
@@ -198,22 +221,51 @@ func hi(bot *telebot.Bot, message telebot.Message) {
 	bot.SendMessage(message.Chat, "Hello, " + mentionUser(message) + "!", nil)
 }
 
-// /help function
+// /bantuan function
 func help(bot *telebot.Bot, message telebot.Message) {
 	bot.SendMessage(message.Chat,
-		"Tanyakan apapun pada Fesol Ajaib!\n" +
-		"Ketik '/tanya <pertanyaan kamu>'!\n\n" +
+		"Tanyakan apapun kepada Fesol Ajaib!\n" +
+		"Ketik \"/tanya <pertanyaan kamu>\"!\n\n" +
+		"Bot juga sama seperti manusia, butuh tidur. Oleh " +
+		"karena itu, jika bot ini sedang tidur atau tidak " +
+		"merespon pertanyaan kamu, coba mention bot dengan " +
+		"cara mengetik /tanya@FesolAjaibBot dan ketik ulang " +
+		"pertanyaan kamu.\n\n" +
 		"Puja Fesol Ajaib! Ululululululu...", nil)
+}
+
+// /tentang function
+func about(bot *telebot.Bot, message telebot.Message) {
+	bot.SendMessage(message.Chat,
+		"Fesol adalah nama dari sebuah kulit kerang ajaib yang " +
+		"mahatahu dan dapat menjawab segala pertanyaan kamu. Kamu " +
+		"harus percaya dengan Fesol Ajaib!\n\nSelamat bergabung " +
+		"di klub pemuja Fesol Ajaib!\n" +
+		"Puja Fesol Ajaib! Ululululululu...", nil)
+}
+
+// /pengembang function
+func developer(bot *telebot.Bot, message telebot.Message) {
+	bot.SendMessage(message.Chat,
+		"Bot Fesol Ajaib ini dibuat berdasarkan inspirasi dari " +
+		"kulit kerang ajaib pada kartun SpongeBob Squarepants. " +
+		"Kode sumber bot ini tersedia secara terbuka di github " +
+		"https://github.com/carlogaza/fesol-ajaib-bot-telegram " +
+		"untuk anda yang tertarik mengembangkan bot ini.", nil)
 }
 
 // /tanya function.
 // This function to get user question and answer it
-func ask(bot *telebot.Bot, message telebot.Message) {
+func ask(bot *telebot.Bot, message telebot.Message, logApp string) string {
 	if strings.ToLower(message.Text) == "/tanya" {
-		bot.SendMessage(message.Chat, mentionUser(message) + " : Ketik pertanyaan kamu di belakang '/tanya'!", nil)
+		bot.SendMessage(message.Chat, mentionUser(message) +
+		" : Ketik pertanyaan kamu di belakang '/tanya'!", nil)
 	} else {
 		bot.SendMessage(message.Chat, mentionUser(message) + " : " + answer(message.Text), nil)
+		// Add answer to log file
+		logApp += "  <->  " + answer(message.Text)
 	}
+	return logApp
 }
 
 // Start the bot
@@ -229,22 +281,33 @@ func start(botKEY string) {
 
 	for message := range messages {
 		// Capture to log file
-		writeLog(time.Now().Format(time.RFC1123) + "  ->  " + mentionUser(message) + "  ->  " + message.Text + "\n")
-		println(time.Now().Format(time.RFC1123) + "  ->  " + mentionUser(message) + "  ->  " + message.Text)
+		logApp := time.Now().Format(time.RFC1123) + "  ->  " + mentionUser(message) + "  ->  " + message.Text
 
 		if message.Text == "/hi" {
 			hi(bot, message)
 		} else if strings.Contains(message.Text, "/help") || message.Text == "/tanya@FesolAjaibBot" {
 			help(bot, message)
+		} else if strings.Contains(message.Text, "/pengembang") {
+			developer(bot, message)
+		} else if strings.Contains(message.Text, "/about") {
+			about(bot, message)
 		} else if strings.Contains(message.Text, "/tanya") {
-			ask(bot, message)
-		} else if strings.HasPrefix(message.Text, "@FesolAjaibBot") || strings.HasSuffix(message.Text, "@FesolAjaibBot") {
+			logApp = ask(bot, message, logApp)
+		} else if strings.HasPrefix(message.Text, "@FesolAjaibBot") ||
+					strings.HasSuffix(message.Text, "@FesolAjaibBot") {
 			if strings.ToLower(message.Text) == "@fesolajaibbot" {
-				bot.SendMessage(message.Chat, mentionUser(message) + " : Ketik pertanyaan kamu di belakang '/tanya'!", nil)
+				bot.SendMessage(message.Chat, mentionUser(message) +
+				" : Ketik pertanyaan kamu di belakang '/tanya'!", nil)
 			} else {
 				bot.SendMessage(message.Chat, mentionUser(message) + " : " + answer(message.Text), nil)
+				// Add answer to log file
+				logApp += "  <->  " + answer(message.Text)
 			}
 		}
+
+		// Write to log file
+		writeLog(logApp + "\n")
+		println(logApp)
 	}
 }
 
@@ -253,7 +316,7 @@ func main() {
 	start(config.API_KEY)
 
 //	println(ans)
-//	println(jawab("Tes pertanyaan"))
+//	println(answer("/tanya jam berapa sekarang?"))
 }
 
 // Write log message to log file
