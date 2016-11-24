@@ -97,12 +97,35 @@ func answer(query string) string {
 			strings.Contains(strings.ToLower(query), "jmbt")) {
 		ans = "ABSOLUTELY!"
 
+	// For asking time
 	} else if strings.Contains(strings.ToLower(query), "jam") &&
 			(strings.Contains(strings.ToLower(query), "berapa") ||
 			strings.Contains(strings.ToLower(query), "brp")) &&
 			(strings.Contains(strings.ToLower(query), "sekarang") ||
 			strings.Contains(strings.ToLower(query), "skrg")) {
 		ans = "Sekarang jam " + time.Now().Format(time.Kitchen)
+
+	// For asking day
+	} else if strings.Contains(strings.ToLower(query), "hari") &&
+			(strings.Contains(strings.ToLower(query), "sekarang") ||
+			strings.Contains(strings.ToLower(query), "skrg")) {
+		ans = "Sekarang hari " + time.Now().Weekday().String()
+
+	// For asking month
+	} else if strings.Contains(strings.ToLower(query), "bulan") &&
+			(strings.Contains(strings.ToLower(query), "sekarang") ||
+			strings.Contains(strings.ToLower(query), "skrg")) {
+		ans = "Sekarang bulan " + time.Now().Month().String()
+
+	// For asking date
+	} else if (strings.Contains(strings.ToLower(query), "tanggal") ||
+			strings.Contains(strings.ToLower(query), "tgl")) &&
+			(strings.Contains(strings.ToLower(query), "berapa") ||
+			strings.Contains(strings.ToLower(query), "brp")) &&
+			(strings.Contains(strings.ToLower(query), "sekarang") ||
+			strings.Contains(strings.ToLower(query), "skrg")) {
+		ans = "Sekarang tanggal " + strconv.Itoa(time.Now().Day()) +
+			" " + time.Now().Month().String() + " " + strconv.Itoa(time.Now().Year())
 
 	// For 'when' question
 	} else if strings.Contains(strings.ToLower(query), "kapan") {
@@ -315,8 +338,9 @@ func main() {
 	config := LoadConfig("./config.json")
 	start(config.API_KEY)
 
-//	println(ans)
-//	println(answer("/tanya jam berapa sekarang?"))
+//	println(answer("/tanya hari apa sekarang?"))
+//	println(answer("/tanya bulan apa sekarang?"))
+//	println(answer("/tanya tanggal berapa sekarang?"))
 }
 
 // Write log message to log file
