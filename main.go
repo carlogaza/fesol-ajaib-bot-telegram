@@ -257,7 +257,7 @@ func developer(bot *telebot.Bot, message telebot.Message) {
 // /tanya function.
 // This function to get user question and answer it
 func ask(bot *telebot.Bot, message telebot.Message, logApp string) string {
-	if strings.ToLower(message.Text) == "/tanya" {
+	if strings.ToLower(message.Text) == "/tanya" || strings.ToLower(message.Text) == "/tanya@fesolajaibbot" {
 		bot.SendMessage(message.Chat, mentionUser(message) +
 		" : Ketik pertanyaan kamu di belakang '/tanya'!", nil)
 	} else {
@@ -285,7 +285,7 @@ func start(botKEY string) {
 
 		if message.Text == "/hi" {
 			hi(bot, message)
-		} else if strings.Contains(message.Text, "/help") || message.Text == "/tanya@FesolAjaibBot" {
+		} else if strings.Contains(message.Text, "/help") {
 			help(bot, message)
 		} else if strings.Contains(message.Text, "/pengembang") {
 			developer(bot, message)
