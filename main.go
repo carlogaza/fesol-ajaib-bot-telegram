@@ -377,9 +377,8 @@ func start(botKEY string) {
 }
 
 func main() {
-//	config := LoadConfig("./config.json")
-//	start(config.API_KEY)
-	start("258624514:AAGNsbjp3z2udCV6Aq7t2FXs0FwQ43IFLQM")
+	config := LoadConfig("./config.json")
+	start(config.API_KEY)
 
 //	println(answer("/tanya hari apa sekarang?"))
 //	println(answer("/tanya bulan apa sekarang?"))
