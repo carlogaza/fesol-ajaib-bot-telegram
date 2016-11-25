@@ -222,7 +222,7 @@ func answer(query string) string {
 	} else if strings.Contains(strings.ToLower(query), "dimana") ||
 			strings.Contains(strings.ToLower(query), "di mana") ||
 			strings.Contains(strings.ToLower(query), "dmn ") {
-		switch calculate(query) % 5 {
+		switch calculate(query) % 7 {
 		case 0:
 			ans = "Sepertinya di rumah."
 		case 1:
@@ -233,6 +233,10 @@ func answer(query string) string {
 			ans = "Lagi di jalan."
 		case 4:
 			ans = "Di tempat kerja."
+		case 5:
+			ans = "Di hatimu."
+		case 6:
+			ans = "Di suatu tempat yang tak diketahui."
 		}
 
 	} else if strings.Contains(strings.ToLower(query), "siapa") &&
