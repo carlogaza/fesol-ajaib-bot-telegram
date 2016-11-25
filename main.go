@@ -202,6 +202,7 @@ func answer(query string) string {
 			ans = "Beberapa tahun."
 		}
 
+	// For 'why' question
 	} else if strings.Contains(strings.ToLower(query), "kenapa") ||
 			strings.Contains(strings.ToLower(query), "mengapa") {
 		switch calculate(query) % 5 {
@@ -216,6 +217,30 @@ func answer(query string) string {
 		case 4:
 			ans = "Memang harus seperti itu."
 		}
+
+	// For 'where' question
+	} else if strings.Contains(strings.ToLower(query), "dimana") ||
+			strings.Contains(strings.ToLower(query), "di mana") ||
+			strings.Contains(strings.ToLower(query), "dmn ") {
+		switch calculate(query) % 5 {
+		case 0:
+			ans = "Sepertinya di rumah."
+		case 1:
+			ans = "Mungkin di kost."
+		case 2:
+			ans = "Di kampus mungkin."
+		case 3:
+			ans = "Lagi di jalan."
+		case 4:
+			ans = "Di tempat kerja."
+		}
+
+	} else if strings.Contains(strings.ToLower(query), "siapa") &&
+			(strings.Contains(strings.ToLower(query), "namamu") ||
+			strings.Contains(strings.ToLower(query), "kamu")) {
+		ans = "Aku Fesol kak, si kulit kerang ajaib, yang dapat menjawab " +
+			"segala pertanyaan kamu. Kalau kakak mau tau lebih lanjut tentang " +
+			"aku, kakak bisa lihat di sini /tentang."
 
 	// For general question
 	} else {
@@ -277,6 +302,21 @@ func developer(bot *telebot.Bot, message telebot.Message) {
 		"untuk anda yang tertarik mengembangkan bot ini.", nil)
 }
 
+// /saran function
+func recommendation(bot *telebot.Bot, message telebot.Message, logApp string) {
+	if strings.ToLower(message.Text) == "/saran" || strings.ToLower(message.Text) == "/saran@fesolajaibbot" {
+		bot.SendMessage(message.Chat,
+			"Jika kamu mempunyai saran untuk bot ini, silahkan kirimkan " +
+			"saran kamu dengan cara mengetik /saran <spasi> saran kamu. " +
+			"Saran kamu sangat bermanfaat untuk pengembangan bot ini sel" +
+			"anjutnya.\nTerima kasih. :)", nil)
+	} else {
+		// Add user recommendation to recommendation file.
+		writeLog(logApp + "\n", "saran.txt")
+		bot.SendMessage(message.Chat, mentionUser(message) + " : Saran kamu telah kami tampung. Terima kasih. :D", nil)
+	}
+}
+
 // /tanya function.
 // This function to get user question and answer it
 func ask(bot *telebot.Bot, message telebot.Message, logApp string) string {
@@ -314,6 +354,8 @@ func start(botKEY string) {
 			developer(bot, message)
 		} else if strings.Contains(message.Text, "/tentang") {
 			about(bot, message)
+		} else if strings.Contains(message.Text, "/saran") {
+			recommendation(bot, message, logApp)
 		} else if strings.Contains(message.Text, "/tanya") {
 			logApp = ask(bot, message, logApp)
 		} else if strings.HasPrefix(message.Text, "@FesolAjaibBot") ||
@@ -329,24 +371,25 @@ func start(botKEY string) {
 		}
 
 		// Write to log file
-		writeLog(logApp + "\n")
+		writeLog(logApp + "\n", "log.txt")
 		println(logApp)
 	}
 }
 
 func main() {
-	config := LoadConfig("./config.json")
-	start(config.API_KEY)
+//	config := LoadConfig("./config.json")
+//	start(config.API_KEY)
+	start("258624514:AAGNsbjp3z2udCV6Aq7t2FXs0FwQ43IFLQM")
 
 //	println(answer("/tanya hari apa sekarang?"))
 //	println(answer("/tanya bulan apa sekarang?"))
 //	println(answer("/tanya tanggal berapa sekarang?"))
 }
 
-// Write log message to log file
-// First must create log file named 'log.txt'
-func writeLog(text string) {
-	f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_WRONLY, 0666)
+// Write to file
+// First must create log file named 'log.txt' or 'saran.txt' or whatever
+func writeLog(text string, fileName string) {
+	f, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Fatalln("Failed open log file. ", err)
 	}
